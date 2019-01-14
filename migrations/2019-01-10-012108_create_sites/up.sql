@@ -1,0 +1,6 @@
+CREATE TABLE sites (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR NOT NULL,
+  zone VARCHAR NOT NULL,
+  disabled BOOLEAN NOT NULL DEFAULT 'f'
+)

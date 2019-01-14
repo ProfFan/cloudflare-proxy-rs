@@ -1,0 +1,22 @@
+cargo-features = ["default-run"]
+
+[package]
+name = "cloudflare-proxy"
+version = "0.1.0"
+authors = ["Fan Jiang <i@fanjiang.me>"]
+edition = "2018"
+default-run = "cloudflare-proxy"
+
+[dependencies]
+diesel = { version = "1.0.0", features = ["postgres"] }
+dotenv = "0.9.0"
+rocket = "0.4.0"
+serde_derive = "*"
+serde = "*"
+tera = "*"
+cloudflare = { git = "git://git@github.com/ProfFan/cloudflare-rs.git", branch = "zone-dns-update" }
+
+[dependencies.rocket_contrib]
+version = "*"
+default-features = false
+features = ["tera_templates", "json"]
