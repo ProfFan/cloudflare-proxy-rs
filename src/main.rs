@@ -113,60 +113,65 @@ fn update(req: Json<UpdateRequest>, cf_conf: rocket::State<CfCredentials>) -> Js
             })
             .unwrap();
 
-        if let Ok(zone_id) = cloudflare::zones::get_zoneid(&cloudflare, &req.zone)
+        match cloudflare::zones::get_zoneid(&cloudflare, &req.zone)
             .map_err(|err| format!("Failed to retreive zone ID: {}", format_error(err)))
         {
-            let current_rec_ =
-                cloudflare::zones::dns::list_dns_of_type(&cloudflare, &zone_id, RecordType::A)
-                    .map_err(|err| format!("Failed to list DNS A records: {}", format_error(err)))
-                    .and_then(|list| {
-                        list.into_iter()
-                            .find(|record| record.name == req.rec)
-                            .ok_or_else(|| format!("Could not find A record for {}", req.rec))
-                    });
-            match current_rec_ {
-                Ok(current_rec) => {
-                    // eprintln!("Got REC: {:?}", current_rec);
+            Ok(zone_id) => {
+                let current_rec_ =
+                    cloudflare::zones::dns::list_dns_of_type(&cloudflare, &zone_id, RecordType::A)
+                        .map_err(|err| {
+                            format!("Failed to list DNS A records: {}", format_error(err))
+                        })
+                        .and_then(|list| {
+                            list.into_iter()
+                                .find(|record| record.name == req.rec)
+                                .ok_or_else(|| format!("Could not find A record for {}", req.rec))
+                        });
+                match current_rec_ {
+                    Ok(current_rec) => {
+                        // eprintln!("Got REC: {:?}", current_rec);
 
-                    use cloudflare::zones::dns::UpdateDnsRecord;
+                        use cloudflare::zones::dns::UpdateDnsRecord;
 
-                    let update_result_ = cloudflare::zones::dns::update_dns_entry(
-                        &cloudflare,
-                        &zone_id,
-                        &current_rec.id,
-                        &UpdateDnsRecord {
-                            record_type: current_rec.record_type,
-                            name: current_rec.name.clone(),
-                            content: req.value.clone(),
-                            ttl: None,
-                            proxied: None,
-                        },
-                    );
+                        let update_result_ = cloudflare::zones::dns::update_dns_entry(
+                            &cloudflare,
+                            &zone_id,
+                            &current_rec.id,
+                            &UpdateDnsRecord {
+                                record_type: current_rec.record_type,
+                                name: current_rec.name.clone(),
+                                content: req.value.clone(),
+                                ttl: None,
+                                proxied: None,
+                            },
+                        );
 
-                    match update_result_ {
-                        Ok(update_result) => {
-                            return Json(UpdateResult {
-                                success: true,
-                                e: format!("{:?}", update_result),
-                            });
-                        }
-                        Err(e) => {
-                            return Json(UpdateResult {
-                                success: true,
-                                e: format_error(e),
-                            });
+                        match update_result_ {
+                            Ok(update_result) => {
+                                return Json(UpdateResult {
+                                    success: true,
+                                    e: format!("{:?}", update_result),
+                                });
+                            }
+                            Err(e) => {
+                                return Json(UpdateResult {
+                                    success: true,
+                                    e: format_error(e),
+                                });
+                            }
                         }
                     }
-                }
-                Err(e) => {
-                    return Json(UpdateResult { success: false, e });
+                    Err(e) => {
+                        return Json(UpdateResult { success: false, e });
+                    }
                 }
             }
-        } else {
-            return Json(UpdateResult {
-                success: false,
-                e: "ERR_ZONE_ID".to_string(),
-            });
+            Err(e) => {
+                return Json(UpdateResult {
+                    success: false,
+                    e: e.to_string(),
+                });
+            }
         }
     }
 
