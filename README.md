@@ -26,6 +26,14 @@ And run the web app with:
 ROCKET_CFUSER=<CF_EMAIL> ROCKET_CFKEY=<CF_KEY> cargo run
 ```
 
+Now you can call the API with:
+
+```
+curl --verbose  --header "Content-Type: application/json" \
+  --data '{"user":"username","key":"fdsfdafsas","zone":"example.net","rec":"vu1.example.net","rectype":"A", "value":"10.2.22.2"}' \
+  http://localhost:8000/update
+```
+
 # LICENSE
 
 MIT or Apache
