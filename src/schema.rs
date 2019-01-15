@@ -21,7 +21,7 @@ table! {
         id -> Int4,
         user_id -> Int4,
         site_id -> Int4,
-        pattern -> Nullable<Varchar>,
+        pattern -> Varchar,
         superuser -> Bool,
     }
 }
@@ -29,8 +29,4 @@ table! {
 joinable!(user_site_privileges -> sites (site_id));
 joinable!(user_site_privileges -> users (user_id));
 
-allow_tables_to_appear_in_same_query!(
-    sites,
-    users,
-    user_site_privileges,
-);
+allow_tables_to_appear_in_same_query!(sites, users, user_site_privileges,);

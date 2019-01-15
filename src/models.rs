@@ -1,6 +1,6 @@
 use crate::schema::*;
 
-#[derive(Queryable, Serialize)]
+#[derive(Queryable, Serialize, Identifiable)]
 pub struct User {
     pub id: i32,
     pub name: String,
@@ -15,7 +15,14 @@ pub struct NewUser<'a> {
     pub key: &'a str,
 }
 
-#[derive(Queryable, Serialize)]
+#[derive(Insertable)]
+#[table_name = "sites"]
+pub struct NewSite<'a> {
+    pub name: &'a str,
+    pub zone: &'a str,
+}
+
+#[derive(Queryable, Serialize, Identifiable)]
 pub struct Site {
     pub id: i32,
     pub name: String,
@@ -23,8 +30,18 @@ pub struct Site {
     pub disabled: bool,
 }
 
-#[derive(Queryable, Serialize, Insertable, PartialEq, Associations)]
-#[belongs_to(User, foreign_key="user_id")]
+#[derive(Insertable, Serialize)]
+#[table_name = "user_site_privileges"]
+pub struct NewUserSitePrivilege<'a> {
+    pub user_id: i32,
+    pub site_id: i32,
+    pub pattern: &'a str,
+    pub superuser: bool,
+}
+
+#[derive(Queryable, Serialize, PartialEq, Associations, Debug, Identifiable)]
+#[belongs_to(User, foreign_key = "user_id")]
+#[belongs_to(Site, foreign_key = "site_id")]
 pub struct UserSitePrivilege {
     pub id: i32,
     pub user_id: i32,

@@ -9,6 +9,9 @@
           {% for user in users %}
             <p>{{ user.name }} {{ user.key }}</p>
           {% endfor %}
+          {% for priv in privs %}
+            <p>{{ priv.user_id }} {{ priv.superuser }}</p>
+          {% endfor %}
         </div>
     </body>
     <footer>

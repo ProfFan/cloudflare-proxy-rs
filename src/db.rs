@@ -3,6 +3,8 @@ use diesel::prelude::*;
 use dotenv::dotenv;
 use std::env;
 
+use crate::models::NewSite;
+use crate::models::Site;
 use crate::models::{NewUser, User};
 
 pub fn establish_connection() -> PgConnection {
@@ -31,4 +33,15 @@ pub fn delete_user(conn: &PgConnection, _name: &str) -> usize {
     diesel::delete(usr)
         .execute(conn)
         .expect("Error deleting user")
+}
+
+pub fn create_site<'a>(conn: &PgConnection, name: &'a str, zone: &'a str) -> Site {
+    use crate::schema::sites;
+
+    let new_site = NewSite { name, zone };
+
+    diesel::insert_into(sites::table)
+        .values(&new_site)
+        .get_result(conn)
+        .expect("Error saving new post")
 }

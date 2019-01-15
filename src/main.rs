@@ -9,19 +9,16 @@ extern crate tera;
 
 extern crate cloudflare;
 
+use cloudflare_proxy::db::establish_connection;
+use cloudflare_proxy::models::{UpdateRequest, UpdateResult, User, UserSitePrivilege};
 use rocket_contrib::json::Json;
 use rocket_contrib::templates::Template;
-use cloudflare_proxy::db::establish_connection;
-use cloudflare_proxy::models::{UpdateRequest, UpdateResult, User};
 
 use rocket::fairing::AdHoc;
 
 use diesel::*;
 
-use cloudflare::{
-    zones::dns::{RecordType},
-    Cloudflare,
-};
+use cloudflare::{zones::dns::RecordType, Cloudflare};
 
 use tera::Context;
 
@@ -32,15 +29,19 @@ struct CfCredentials {
 
 #[get("/")]
 fn index() -> Template {
-//    use cloudflare_proxy::schema::users::dsl::*;
-//
-//    let connection = establish_connection();
-//    let results = users
-//        .filter(disabled.eq(false))
-//        .load::<User>(&connection)
-//        .expect("Error loading users");
-
+    //    use cloudflare_proxy::schema::users::dsl::*;
+    //
+    //    let connection = establish_connection();
+    //    let results = users
+    //        .filter(disabled.eq(false))
+    //        .load::<User>(&connection)
+    //        .expect("Error loading users");
+    //
     let mut context = Context::new();
+    //
+    //    let privs = UserSitePrivilege::belonging_to(&results[0])
+    //        .load::<UserSitePrivilege>(&connection)
+    //        .expect("ERROR!");
 
     // Guess you will not want to show your secrets :)
     // context.insert("users", &results);
@@ -50,13 +51,19 @@ fn index() -> Template {
         key: "fAk3_s3cr3t_kee".to_string(),
         disabled: false,
     }];
+
     context.insert("users", &test_vec);
+
+    let test_vec_2: Vec<UserSitePrivilege> = Vec::new();
+    context.insert("privs", &test_vec_2);
 
     Template::render("index", &context)
 }
 
 #[post("/update", format = "application/json", data = "<req>")]
 fn update(req: Json<UpdateRequest>, cf_conf: rocket::State<CfCredentials>) -> Json<UpdateResult> {
+    use cloudflare_proxy::schema::sites;
+    use cloudflare_proxy::schema::user_site_privileges;
     use cloudflare_proxy::schema::users::dsl::*;
 
     let connection = establish_connection();
@@ -69,7 +76,34 @@ fn update(req: Json<UpdateRequest>, cf_conf: rocket::State<CfCredentials>) -> Js
 
     let api_base = "https://api.cloudflare.com/client/v4/";
 
-    if results.len() > 0 {
+    if results.len() == 1 {
+        let privs = UserSitePrivilege::belonging_to(&results[0])
+            .inner_join(sites::dsl::sites)
+            .select((
+                sites::dsl::zone,
+                user_site_privileges::pattern,
+                user_site_privileges::dsl::superuser,
+            ))
+            .filter(sites::dsl::zone.eq(&req.zone))
+            .load::<(String, String, bool)>(&connection)
+            .expect("Error fetching privileges!");
+
+        // let q = UserSitePrivilege::belonging_to(&results[0])
+        //    .inner_join(sites::dsl::sites)
+        //    .select((sites::dsl::zone, user_site_privileges::pattern, user_site_privileges::dsl::superuser))
+        //    .filter(sites::dsl::zone.eq(&req.zone));
+
+        // eprintln!("{:?}", debug_query::<Pg, _>(&q).to_string());
+
+        // eprintln!("{:?}", privs);
+
+        if privs.len() < 1 || privs[0].2 == false {
+            return Json(UpdateResult {
+                success: false,
+                e: "ERR_NO_PRIV".to_string(),
+            });
+        }
+
         let cloudflare = Cloudflare::new(&cf_conf.key, &cf_conf.user, &api_base)
             .map_err(|err| {
                 format!(
@@ -92,7 +126,7 @@ fn update(req: Json<UpdateRequest>, cf_conf: rocket::State<CfCredentials>) -> Js
                     });
             match current_rec_ {
                 Ok(current_rec) => {
-                    eprintln!("Got REC: {:?}", current_rec);
+                    // eprintln!("Got REC: {:?}", current_rec);
 
                     use cloudflare::zones::dns::UpdateDnsRecord;
 
