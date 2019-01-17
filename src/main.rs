@@ -104,6 +104,29 @@ fn update(req: Json<UpdateRequest>, cf_conf: rocket::State<CfCredentials>) -> Js
             });
         }
 
+        let rectype: RecordType;
+        let _rectype = req.rectype.to_uppercase();
+        match _rectype.as_str() {
+            "A" => {
+                rectype = RecordType::A;
+            }
+            "AAAA" => {
+                rectype = RecordType::AAAA;
+            }
+            "TXT" => {
+                rectype = RecordType::TXT;
+            }
+            "SRV" => {
+                rectype = RecordType::SRV;
+            }
+            _ => {
+                return Json(UpdateResult {
+                    success: false,
+                    e: "ERR_REC_TYPE".to_string(),
+                });
+            }
+        }
+
         let cloudflare = Cloudflare::new(&cf_conf.key, &cf_conf.user, &api_base)
             .map_err(|err| {
                 format!(
@@ -118,7 +141,7 @@ fn update(req: Json<UpdateRequest>, cf_conf: rocket::State<CfCredentials>) -> Js
         {
             Ok(zone_id) => {
                 let current_rec_ =
-                    cloudflare::zones::dns::list_dns_of_type(&cloudflare, &zone_id, RecordType::A)
+                    cloudflare::zones::dns::list_dns_of_type(&cloudflare, &zone_id, rectype)
                         .map_err(|err| {
                             format!("Failed to list DNS A records: {}", format_error(err))
                         })
