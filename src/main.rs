@@ -118,7 +118,10 @@ fn update(req: Json<UpdateRequest>, cf_conf: rocket::State<CfCredentials>) -> Js
             }
             "SRV" => {
                 rectype = RecordType::SRV;
-            }
+            },
+            "CNAME" => {
+                rectype = RecordType::CNAME;
+            },
             _ => {
                 return Json(UpdateResult {
                     success: false,
@@ -164,8 +167,8 @@ fn update(req: Json<UpdateRequest>, cf_conf: rocket::State<CfCredentials>) -> Js
                                 record_type: current_rec.record_type,
                                 name: current_rec.name.clone(),
                                 content: req.value.clone(),
-                                ttl: None,
-                                proxied: None,
+                                ttl: Some(current_rec.ttl),
+                                proxied: Some(current_rec.proxied),
                             },
                         );
 
