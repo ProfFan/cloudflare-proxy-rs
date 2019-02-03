@@ -9,6 +9,8 @@ extern crate tera;
 
 extern crate cloudflare;
 
+extern crate regex;
+
 use cloudflare_proxy::db::establish_connection;
 use cloudflare_proxy::models::{UpdateRequest, UpdateResult, User, UserSitePrivilege};
 use rocket_contrib::json::Json;
@@ -97,7 +99,29 @@ fn update(req: Json<UpdateRequest>, cf_conf: rocket::State<CfCredentials>) -> Js
 
         // eprintln!("{:?}", privs);
 
-        if privs.len() < 1 || privs[0].2 == false {
+        if privs.len() < 1 {
+            return Json(UpdateResult {
+                success: false,
+                e: "ERR_NO_PRIV".to_string(),
+            });
+        }
+
+        let mut allowed = false;
+        for entry in privs {
+            use regex::Regex;
+
+            if entry.2 {
+                allowed = true;
+            }
+
+            let re = Regex::new(&entry.1).unwrap();
+
+            if re.is_match(&req.rec) {
+                allowed = true;
+            }
+        }
+
+        if !allowed {
             return Json(UpdateResult {
                 success: false,
                 e: "ERR_NO_PRIV".to_string(),
@@ -118,10 +142,10 @@ fn update(req: Json<UpdateRequest>, cf_conf: rocket::State<CfCredentials>) -> Js
             }
             "SRV" => {
                 rectype = RecordType::SRV;
-            },
+            }
             "CNAME" => {
                 rectype = RecordType::CNAME;
-            },
+            }
             _ => {
                 return Json(UpdateResult {
                     success: false,

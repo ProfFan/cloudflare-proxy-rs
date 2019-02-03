@@ -13,6 +13,7 @@ dotenv = "0.13.0"
 rocket = "0.4.0"
 serde_derive = "1.0.84"
 serde = "1.0.84"
+regex = "1"
 tera = "0.11.20"
 cloudflare = { git = "git://git@github.com/ProfFan/cloudflare-rs.git", branch = "zone-dns-update" }
 
