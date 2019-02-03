@@ -13,6 +13,8 @@ DATABASE_URL=postgres://user_pass@localhost/DB_NAME
 Then create a user, a site and give the user privilege:
 
 ```
+diesel setup
+
 cargo run --bin new_user
 
 cargo run --bin new_site
