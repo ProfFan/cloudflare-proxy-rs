@@ -90,15 +90,6 @@ fn update(req: Json<UpdateRequest>, cf_conf: rocket::State<CfCredentials>) -> Js
             .load::<(String, String, bool)>(&connection)
             .expect("Error fetching privileges!");
 
-        // let q = UserSitePrivilege::belonging_to(&results[0])
-        //    .inner_join(sites::dsl::sites)
-        //    .select((sites::dsl::zone, user_site_privileges::pattern, user_site_privileges::dsl::superuser))
-        //    .filter(sites::dsl::zone.eq(&req.zone));
-
-        // eprintln!("{:?}", debug_query::<Pg, _>(&q).to_string());
-
-        // eprintln!("{:?}", privs);
-
         if privs.len() < 1 {
             return Json(UpdateResult {
                 success: false,
@@ -179,8 +170,6 @@ fn update(req: Json<UpdateRequest>, cf_conf: rocket::State<CfCredentials>) -> Js
                         });
                 match current_rec_ {
                     Ok(current_rec) => {
-                        // eprintln!("Got REC: {:?}", current_rec);
-
                         use cloudflare::zones::dns::UpdateDnsRecord;
 
                         let update_result_ = cloudflare::zones::dns::update_dns_entry(
@@ -325,38 +314,38 @@ fn add(req: Json<AddRequest>, cf_conf: rocket::State<CfCredentials>) -> Json<Add
 
         match cloudflare::zones::get_zoneid(&cloudflare, &req.zone)
             .map_err(|err| format!("Failed to retreive zone ID: {}", format_error(err)))
-            {
-                Ok(zone_id) => {
-                    let create_result_ = cloudflare::zones::dns::create_dns_entry(
-                        &cloudflare,
-                        &zone_id,
-                        rectype,
-                        &req.rec,
-                        &req.value,
-                    );
+        {
+            Ok(zone_id) => {
+                let create_result_ = cloudflare::zones::dns::create_dns_entry(
+                    &cloudflare,
+                    &zone_id,
+                    rectype,
+                    &req.rec,
+                    &req.value,
+                );
 
-                    match create_result_ {
-                        Ok(create_result) => {
-                            return Json(AddResult {
-                                success: true,
-                                e: format!("{:?}", create_result),
-                            });
-                        }
-                        Err(e) => {
-                            return Json(AddResult {
-                                success: false,
-                                e: format_error(e),
-                            });
-                        }
+                match create_result_ {
+                    Ok(create_result) => {
+                        return Json(AddResult {
+                            success: true,
+                            e: format!("{:?}", create_result),
+                        });
+                    }
+                    Err(e) => {
+                        return Json(AddResult {
+                            success: false,
+                            e: format_error(e),
+                        });
                     }
                 }
-                Err(e) => {
-                    return Json(AddResult {
-                        success: false,
-                        e: e.to_string(),
-                    });
-                }
             }
+            Err(e) => {
+                return Json(AddResult {
+                    success: false,
+                    e: e.to_string(),
+                });
+            }
+        }
     }
 
     Json(AddResult {
@@ -392,15 +381,6 @@ fn delete(req: Json<DeleteRequest>, cf_conf: rocket::State<CfCredentials>) -> Js
             .filter(sites::dsl::zone.eq(&req.zone))
             .load::<(String, String, bool)>(&connection)
             .expect("Error fetching privileges!");
-
-        // let q = UserSitePrivilege::belonging_to(&results[0])
-        //    .inner_join(sites::dsl::sites)
-        //    .select((sites::dsl::zone, user_site_privileges::pattern, user_site_privileges::dsl::superuser))
-        //    .filter(sites::dsl::zone.eq(&req.zone));
-
-        // eprintln!("{:?}", debug_query::<Pg, _>(&q).to_string());
-
-        // eprintln!("{:?}", privs);
 
         if privs.len() < 1 {
             return Json(DeleteResult {
@@ -468,55 +448,53 @@ fn delete(req: Json<DeleteRequest>, cf_conf: rocket::State<CfCredentials>) -> Js
 
         match cloudflare::zones::get_zoneid(&cloudflare, &req.zone)
             .map_err(|err| format!("Failed to retreive zone ID: {}", format_error(err)))
-            {
-                Ok(zone_id) => {
-                    let current_rec_ =
-                        cloudflare::zones::dns::list_dns_of_type(&cloudflare, &zone_id, rectype)
-                            .map_err(|err| format!("Failed to list DNS records: {}", format_error(err)))
-                            .and_then(|list| {
-                                list.into_iter()
-                                    .find(|record| (record.name == req.rec && record.content == req.value))
-                                    .ok_or_else(|| format!("Could not find record for {}", req.rec))
-                            });
-                    match current_rec_ {
-                        Ok(current_rec) => {
+        {
+            Ok(zone_id) => {
+                let current_rec_ =
+                    cloudflare::zones::dns::list_dns_of_type(&cloudflare, &zone_id, rectype)
+                        .map_err(|err| format!("Failed to list DNS records: {}", format_error(err)))
+                        .and_then(|list| {
+                            list.into_iter()
+                                .find(|record| {
+                                    (record.name == req.rec && record.content == req.value)
+                                })
+                                .ok_or_else(|| format!("Could not find record for {}", req.rec))
+                        });
+                match current_rec_ {
+                    Ok(current_rec) => {
+                        let delete_result_ = cloudflare::zones::dns::delete_dns_entry(
+                            &cloudflare,
+                            &zone_id,
+                            &current_rec.id,
+                        );
 
-                            eprintln!("{:?}", current_rec);
-                            eprintln!("{:?}", zone_id);
-
-                            let delete_result_ = cloudflare::zones::dns::delete_dns_entry(
-                                &cloudflare,
-                                &zone_id,
-                                &current_rec.id
-                            );
-
-                            match delete_result_ {
-                                Ok(delete_result) => {
-                                    return Json(DeleteResult {
-                                        success: true,
-                                        e: format!("{:?}", delete_result),
-                                    });
-                                }
-                                Err(e) => {
-                                    return Json(DeleteResult {
-                                        success: true,
-                                        e: format_error(e),
-                                    });
-                                }
+                        match delete_result_ {
+                            Ok(delete_result) => {
+                                return Json(DeleteResult {
+                                    success: true,
+                                    e: format!("{:?}", delete_result),
+                                });
+                            }
+                            Err(e) => {
+                                return Json(DeleteResult {
+                                    success: true,
+                                    e: format_error(e),
+                                });
                             }
                         }
-                        Err(e) => {
-                            return Json(DeleteResult { success: false, e });
-                        }
+                    }
+                    Err(e) => {
+                        return Json(DeleteResult { success: false, e });
                     }
                 }
-                Err(e) => {
-                    return Json(DeleteResult {
-                        success: false,
-                        e: e.to_string(),
-                    });
-                }
             }
+            Err(e) => {
+                return Json(DeleteResult {
+                    success: false,
+                    e: e.to_string(),
+                });
+            }
+        }
     }
 
     Json(DeleteResult {

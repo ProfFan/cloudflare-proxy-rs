@@ -36,6 +36,10 @@ curl --verbose  --header "Content-Type: application/json" \
   http://localhost:8000/update
 ```
 
+# ACME (Let's Encrypt)
+
+Use with [`certbot-dns-cfproxy`](https://github.com/ProfFan/certbot-dns-cfproxy)
+
 # LICENSE
 
 MIT or Apache
