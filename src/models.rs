@@ -65,3 +65,35 @@ pub struct UpdateResult {
     pub success: bool,
     pub e: String,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AddRequest {
+    pub user: String,
+    pub key: String,
+    pub zone: String,
+    pub rec: String,
+    pub rectype: String,
+    pub value: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct AddResult {
+    pub success: bool,
+    pub e: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DeleteRequest {
+    pub user: String,
+    pub key: String,
+    pub zone: String,
+    pub rec: String,
+    pub rectype: String,
+    pub value: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct DeleteResult {
+    pub success: bool,
+    pub e: String,
+}
