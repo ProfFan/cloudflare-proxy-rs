@@ -31,22 +31,8 @@ struct CfCredentials {
 
 #[get("/")]
 fn index() -> Template {
-    //    use cloudflare_proxy::schema::users::dsl::*;
-    //
-    //    let connection = establish_connection();
-    //    let results = users
-    //        .filter(disabled.eq(false))
-    //        .load::<User>(&connection)
-    //        .expect("Error loading users");
-    //
     let mut context = Context::new();
-    //
-    //    let privs = UserSitePrivilege::belonging_to(&results[0])
-    //        .load::<UserSitePrivilege>(&connection)
-    //        .expect("ERROR!");
 
-    // Guess you will not want to show your secrets :)
-    // context.insert("users", &results);
     let test_vec = [User {
         name: "Nono".to_string(),
         id: 0,
