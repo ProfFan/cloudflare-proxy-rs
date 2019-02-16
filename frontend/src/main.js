@@ -8,6 +8,7 @@ import 'vue-material/dist/theme/default.css'
 
 import Home from './components/Home.vue';
 import Record from './components/Record';
+import RecordList from "./components/RecordList";
 
 Vue.use(MdButton);
 Vue.use(MdContent);
@@ -19,6 +20,8 @@ Vue.use(MdDrawer);
 Vue.use(MdList);
 Vue.use(VueRouter);
 Vue.use(Vuex);
+
+Vue.component('router-link', Vue.options.components.RouterLink);
 
 import App from './App.vue'
 
@@ -46,7 +49,16 @@ const store = new Vuex.Store({
 
 const routes = [
   { path: '/', component: Home },
-  { path: '/record/:id', component: Record, props: true }
+  { path: "/records", component: RecordList,
+    beforeEnter: (to, from, next) => {
+      next(false)
+    }
+  },
+  { path: '/record/:id', component: Record, props: true,
+    beforeEnter: (to, from, next) => {
+      next(false)
+    }
+  }
 ];
 
 const router = new VueRouter({

@@ -22,7 +22,8 @@ use diesel::*;
 
 use cloudflare::{zones::dns::RecordType, Cloudflare};
 
-use tera::Context;
+use std::path::{Path, PathBuf};
+use rocket::response::NamedFile;
 
 struct CfCredentials {
     user: String,
@@ -30,22 +31,13 @@ struct CfCredentials {
 }
 
 #[get("/")]
-fn index() -> Template {
-    let mut context = Context::new();
+fn index() -> Option<NamedFile> {
+    NamedFile::open(Path::new("frontend/dist/index.html")).ok()
+}
 
-    let test_vec = [User {
-        name: "Nono".to_string(),
-        id: 0,
-        key: "fAk3_s3cr3t_kee".to_string(),
-        disabled: false,
-    }];
-
-    context.insert("users", &test_vec);
-
-    let test_vec_2: Vec<UserSitePrivilege> = Vec::new();
-    context.insert("privs", &test_vec_2);
-
-    Template::render("index", &context)
+#[get("/<file..>")]
+fn static_files(file: PathBuf) -> Option<NamedFile> {
+    NamedFile::open(Path::new("frontend/dist/").join(file)).ok()
 }
 
 #[post("/update", format = "application/json", data = "<req>")]
@@ -495,6 +487,7 @@ fn main() {
         .mount("/", routes![update])
         .mount("/", routes![add])
         .mount("/", routes![delete])
+        .mount("/", routes![static_files])
         .attach(Template::fairing())
         .attach(AdHoc::on_attach("cfconfig", |rocket| {
             let user = rocket.config().get_str("cfuser").unwrap().to_string();
