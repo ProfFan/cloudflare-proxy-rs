@@ -41,7 +41,7 @@ fn main() {
         return;
     }
 
-    println!("Input the pattern:");
+    println!("Input the regex pattern:");
     let mut pattern = String::new();
     stdin().read_line(&mut pattern).unwrap();
 
