@@ -2,7 +2,7 @@ use cloudflare_proxy::db::{create_user, establish_connection};
 use std::io::stdin;
 
 fn main() {
-    let connection = establish_connection();
+    let mut connection = establish_connection();
 
     println!("Input username:");
     let mut name = String::new();
@@ -14,7 +14,7 @@ fn main() {
 
     key.truncate(key.len() - 1);
 
-    let post = create_user(&connection, name, &key);
+    let post = create_user(&mut connection, name, &key);
     println!("\nCreated user {} with id {}", name, post.id);
 }
 //fn main(){}

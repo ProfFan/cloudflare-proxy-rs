@@ -14,7 +14,7 @@ pub fn establish_connection() -> PgConnection {
     PgConnection::establish(&database_url).expect(&format!("Error connecting to {}", database_url))
 }
 
-pub fn create_user<'a>(conn: &PgConnection, name: &'a str, key: &'a str) -> User {
+pub fn create_user<'a>(conn: &mut PgConnection, name: &'a str, key: &'a str) -> User {
     use crate::schema::users;
 
     let new_user = NewUser { name, key };
@@ -25,7 +25,7 @@ pub fn create_user<'a>(conn: &PgConnection, name: &'a str, key: &'a str) -> User
         .expect("Error saving new post")
 }
 
-pub fn delete_user(conn: &PgConnection, _name: &str) -> usize {
+pub fn delete_user(conn: &mut PgConnection, _name: &str) -> usize {
     use crate::schema::users;
 
     let usr = users::table.filter(users::name.eq(_name));
@@ -35,7 +35,7 @@ pub fn delete_user(conn: &PgConnection, _name: &str) -> usize {
         .expect("Error deleting user")
 }
 
-pub fn create_site<'a>(conn: &PgConnection, name: &'a str, zone: &'a str) -> Site {
+pub fn create_site<'a>(conn: &mut PgConnection, name: &'a str, zone: &'a str) -> Site {
     use crate::schema::sites;
 
     let new_site = NewSite { name, zone };

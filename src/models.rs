@@ -9,14 +9,14 @@ pub struct User {
 }
 
 #[derive(Insertable)]
-#[table_name = "users"]
+#[diesel(table_name = users)]
 pub struct NewUser<'a> {
     pub name: &'a str,
     pub key: &'a str,
 }
 
 #[derive(Insertable)]
-#[table_name = "sites"]
+#[diesel(table_name = sites)]
 pub struct NewSite<'a> {
     pub name: &'a str,
     pub zone: &'a str,
@@ -31,7 +31,7 @@ pub struct Site {
 }
 
 #[derive(Insertable, Serialize)]
-#[table_name = "user_site_privileges"]
+#[diesel(table_name = user_site_privileges)]
 pub struct NewUserSitePrivilege<'a> {
     pub user_id: i32,
     pub site_id: i32,
@@ -40,8 +40,8 @@ pub struct NewUserSitePrivilege<'a> {
 }
 
 #[derive(Queryable, Serialize, PartialEq, Associations, Debug, Identifiable)]
-#[belongs_to(User, foreign_key = "user_id")]
-#[belongs_to(Site, foreign_key = "site_id")]
+#[diesel(belongs_to(User, foreign_key = user_id))]
+#[diesel(belongs_to(Site, foreign_key = site_id))]
 pub struct UserSitePrivilege {
     pub id: i32,
     pub user_id: i32,

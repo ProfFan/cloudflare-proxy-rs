@@ -4,7 +4,7 @@ use diesel::prelude::*;
 use std::io::stdin;
 
 fn main() {
-    let connection = establish_connection();
+    let mut connection = establish_connection();
 
     println!("Input user:");
     let mut name = String::new();
@@ -15,7 +15,7 @@ fn main() {
 
     let usr = users::table
         .filter(users::name.eq(name))
-        .load::<User>(&connection)
+        .load::<User>(&mut connection)
         .expect("Error loading users");
 
     if usr.len() != 1 {
@@ -33,7 +33,7 @@ fn main() {
 
     let site = sites::table
         .filter(sites::zone.eq(zone_name))
-        .load::<User>(&connection)
+        .load::<User>(&mut connection)
         .expect("Error loading sites!");
 
     if site.len() != 1 {
@@ -69,6 +69,6 @@ fn main() {
 
     diesel::insert_into(user_site_privileges::table)
         .values(&new_priv)
-        .execute(&connection)
+        .execute(&mut connection)
         .expect("Error saving new privilege");
 }

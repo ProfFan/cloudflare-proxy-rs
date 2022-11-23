@@ -2,7 +2,7 @@ use cloudflare_proxy::db::{create_site, establish_connection};
 use std::io::stdin;
 
 fn main() {
-    let connection = establish_connection();
+    let mut connection = establish_connection();
 
     println!("Input site name:");
     let mut name = String::new();
@@ -14,6 +14,6 @@ fn main() {
 
     key.truncate(key.len() - 1);
 
-    let post = create_site(&connection, name, &key);
+    let post = create_site(&mut connection, name, &key);
     println!("\nCreated site {} with id {}", name, post.id);
 }
